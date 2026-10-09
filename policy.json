@@ -1,0 +1,30 @@
+{
+  "defaultTier": "read",
+  "processes": [
+    {"match": "notepad.exe", "tier": "interact"},
+    {"match": "calc.exe", "tier": "interact"},
+    {"match": "CalculatorApp.exe", "tier": "interact"},
+    {"match": "mspaint.exe", "tier": "interact"},
+    {"match": "WINWORD.EXE", "tier": "interact"},
+    {"match": "EXCEL.EXE", "tier": "interact"},
+    {"match": "POWERPNT.EXE", "tier": "interact"},
+    {"match": "WeChat.exe", "tier": "interact"},
+    {"match": "Weixin.exe", "tier": "interact"},
+    {"match": "QQ.exe", "tier": "interact"},
+    {"match": "QQNT.exe", "tier": "interact"},
+    {"match": "outlook.exe", "tier": "interact"},
+    {"match": "thunderbird.exe", "tier": "interact"},
+    {"match": "explorer.exe", "tier": "read"},
+    {"match": "regedit.exe", "tier": "blocked"},
+    {"match": "mmc.exe", "tier": "blocked"},
+    {"match": "diskpart.exe", "tier": "blocked"},
+    {"match": "SystemSettings.exe", "tier": "blocked"},
+    {"match": "WindowsTerminal.exe", "tier": "blocked"},
+    {"match": "cmd.exe", "tier": "blocked"},
+    {"match": "pwsh.exe", "tier": "blocked"},
+    {"match": "powershell.exe", "tier": "blocked"},
+    {"match": "Code.exe", "tier": "blocked"},
+    {"match": "devenv.exe", "tier": "blocked"}
+  ],
+  "confirmations": ["delete", "uninstall", "send", "purchase", "transfer", "format", "shutdown", "settings"]
+}

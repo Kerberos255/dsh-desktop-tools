@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "enabled": true,
+  "defaultTier": "read",
+  "processesJson": "[\n  {\n    \"match\": \"notepad.exe\",\n    \"tier\": \"interact\"\n  },\n  {\n    \"match\": \"calc.exe\",\n    \"tier\": \"interact\"\n  },\n  {\n    \"match\": \"CalculatorApp.exe\",\n    \"tier\": \"interact\"\n  },\n  {\n    \"match\": \"mspaint.exe\",\n    \"tier\": \"interact\"\n  },\n  {\n    \"match\": \"WINWORD.EXE\",\n    \"tier\": \"interact\"\n  },\n  {\n    \"match\": \"EXCEL.EXE\",\n    \"tier\": \"interact\"\n  },\n  {\n    \"match\": \"POWERPNT.EXE\",\n    \"tier\": \"interact\"\n  },\n  {\n    \"match\": \"WeChat.exe\",\n    \"tier\": \"interact\"\n  },\n  {\n    \"match\": \"Weixin.exe\",\n    \"tier\": \"interact\"\n  },\n  {\n    \"match\": \"QQ.exe\",\n    \"tier\": \"interact\"\n  },\n  {\n    \"match\": \"QQNT.exe\",\n    \"tier\": \"interact\"\n  },\n  {\n    \"match\": \"outlook.exe\",\n    \"tier\": \"interact\"\n  },\n  {\n    \"match\": \"thunderbird.exe\",\n    \"tier\": \"interact\"\n  },\n  {\n    \"match\": \"explorer.exe\",\n    \"tier\": \"read\"\n  },\n  {\n    \"match\": \"regedit.exe\",\n    \"tier\": \"blocked\"\n  },\n  {\n    \"match\": \"mmc.exe\",\n    \"tier\": \"blocked\"\n  },\n  {\n    \"match\": \"diskpart.exe\",\n    \"tier\": \"blocked\"\n  },\n  {\n    \"match\": \"SystemSettings.exe\",\n    \"tier\": \"blocked\"\n  },\n  {\n    \"match\": \"WindowsTerminal.exe\",\n    \"tier\": \"blocked\"\n  },\n  {\n    \"match\": \"cmd.exe\",\n    \"tier\": \"blocked\"\n  },\n  {\n    \"match\": \"pwsh.exe\",\n    \"tier\": \"blocked\"\n  },\n  {\n    \"match\": \"powershell.exe\",\n    \"tier\": \"blocked\"\n  },\n  {\n    \"match\": \"Code.exe\",\n    \"tier\": \"blocked\"\n  },\n  {\n    \"match\": \"devenv.exe\",\n    \"tier\": \"blocked\"\n  }\n]",
+  "confirmations": [
+    "delete",
+    "uninstall",
+    "send",
+    "purchase",
+    "transfer",
+    "format",
+    "shutdown",
+    "settings"
+  ],
+  "allowMutations": false,
+  "allowPhysicalInput": true,
+  "requireIndicator": true,
+  "credentialRulesJson": "[]",
+  "powershellPath": "pwsh.exe",
+  "maxSnapshotChars": 4000,
+  "actionTimeoutMs": 30000,
+  "maxScreenshotBytes": 5242880,
+  "maxScreenshotWidth": 3200,
+  "maxScreenshotHeight": 2400,
+  "maxRunBytes": 209715200,
+  "screenshotRetentionDays": 7,
+  "recordText": false
+}

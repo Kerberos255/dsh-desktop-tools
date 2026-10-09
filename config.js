@@ -1,0 +1,9 @@
+import { defineConfig } from './plugin-settings/remote-config.js';
+import { defaults,processRules } from './lib/policy.js';
+const integer=(value,min,max)=>Number.isSafeInteger(value)&&value>=min&&value<=max;
+export const schema=defineConfig({enabled:true,defaultTier:defaults.defaultTier,processesJson:JSON.stringify(defaults.processes,null,2),confirmations:defaults.confirmations,allowMutations:false,allowPhysicalInput:true,requireIndicator:true,credentialRulesJson:'[]',powershellPath:'pwsh.exe',maxSnapshotChars:4000,actionTimeoutMs:30000,maxScreenshotBytes:5242880,maxScreenshotWidth:3200,maxScreenshotHeight:2400,maxRunBytes:209715200,screenshotRetentionDays:7,recordText:false},{
+ defaultTier:value=>['read','interact','blocked'].includes(value),processesJson:value=>{try{processRules(value);return true;}catch{return false;}},
+ confirmations:value=>value.length<=8&&new Set(value).size===value.length&&value.every(key=>defaults.confirmations.includes(key)),
+ credentialRulesJson:value=>{try{const rows=JSON.parse(value);return Array.isArray(rows)&&rows.length<=50&&rows.every(row=>row&&Object.keys(row).every(key=>['ref','match'].includes(key))&&typeof row.ref==='string'&&/^[A-Za-z0-9_.:/-]{1,256}$/.test(row.ref)&&processRules(JSON.stringify([{match:row.match,tier:'interact'}])).length===1);}catch{return false;}},
+ powershellPath:value=>typeof value==='string'&&value.length>0&&value.length<=4096&&!/[\r\n\0]/.test(value),maxSnapshotChars:value=>integer(value,1000,65536),actionTimeoutMs:value=>integer(value,1000,120000),maxScreenshotBytes:value=>integer(value,16384,20971520),maxScreenshotWidth:value=>integer(value,320,7680),maxScreenshotHeight:value=>integer(value,240,4320),maxRunBytes:value=>integer(value,10485760,1073741824),screenshotRetentionDays:value=>integer(value,0,365),
+});
