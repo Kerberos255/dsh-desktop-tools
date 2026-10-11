@@ -1,6 +1,6 @@
 {
   "name": "dsh-desktop-tools",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "type": "module",
   "license": "MIT",
   "description": "通过窗口结构、原生审批和可见的键鼠兜底操作 Windows 应用，默认只读。",

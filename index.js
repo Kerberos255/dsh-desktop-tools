@@ -34,6 +34,7 @@ export default class DesktopTools extends PluginConfig{
  static inject=['dshHomePath','tools'];
  constructor(ctx,legacy={}){
   super(ctx,{service:'desktopTools',packageName:'dsh-desktop-tools',schema,details:()=>({connected:!!this.engine?.hello,message:this.error||(this.engine?.hello?'桌面引擎已连接':'按需启动桌面引擎')+' · '+(this.configFile.value.allowMutations?'写操作已开启':'只读')})},legacy);
+  ctx.inject(['pluginDiagnostics'],scope=>{const diag=scope.get('pluginDiagnostics');diag.start('dsh-desktop-tools');scope.effect(()=>()=>diag.stop('dsh-desktop-tools'));});
   this.context=ctx;this.closed=false;this.states=new Map();this.tasks=new Set();this.agents=new WeakSet();this.abort=new AbortController();this.configAbort=new AbortController();
   const root=ctx.dshHomePath('dsh-desktop-tools','runs');this.artifacts=new Artifacts(root,()=>this.configFile.value);this.engine=new Engine(()=>this.configFile.value,root,{onReset:()=>{for(const state of this.states.values()){state.refs.clear();state.screenshot=null;}}});
   this.actions=new Actions(this.engine,this.artifacts,{approve:request=>ctx.get('approval')?.request(request),credential:async(ref,signal)=>{const value=await ctx.get('credentials')?.resolve(ref);signal.throwIfAborted();return value?.value;},readOnly:exec=>desktopPermissionPreset(ctx,exec)==='read-only',permissionPreset:exec=>desktopPermissionPreset(ctx,exec)});
