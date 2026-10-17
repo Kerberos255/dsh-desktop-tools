@@ -1,6 +1,6 @@
 {
   "name": "dsh-desktop-tools",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "type": "module",
   "license": "MIT",
   "description": "通过窗口结构、原生审批和可见的键鼠兜底操作 Windows 应用，默认只读。",
@@ -28,7 +28,7 @@
     "client.js"
   ],
   "peerDependencies": {
-    "@deepseek-ai/cordis": "4.0.4 || 4.0.5-alpha.1 || 4.0.5",
+    "@deepseek-ai/cordis": "4.0.5-alpha.1 || >=4.0.4 <5.0.0",
     "@deepseek-ai/dsh-tools": "0.2.0-rc.2 || 0.2.1-rc.2 || 0.2.1-alpha.1 || >=0.2.1",
     "@deepseek-ai/dsh-llm": "0.2.0-rc.2 || 0.2.1-rc.2 || 0.2.1-alpha.1 || >=0.2.1",
     "@deepseek-ai/dsh-user-approval": "0.2.0-rc.2 || 0.2.1-rc.2 || 0.2.1-alpha.1 || >=0.2.1",
