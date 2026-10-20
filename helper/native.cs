@@ -56,6 +56,10 @@ internal static class Win {
  [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr hwnd,out RECT rect);
  [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
  [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hwnd);
+ [DllImport("user32.dll")] public static extern bool AttachThreadInput(uint attach, uint attachTo, bool flag);
+ [DllImport("kernel32.dll")] public static extern uint GetCurrentThreadId();
+ [DllImport("user32.dll")] public static extern void keybd_event(byte vk, byte scan, uint flags, UIntPtr extra);
+ [DllImport("user32.dll")] public static extern void SwitchToThisWindow(IntPtr hwnd, bool altTab);
  [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hwnd,int command);
  [DllImport("user32.dll")] public static extern IntPtr GetAncestor(IntPtr hwnd,uint flag);
  [DllImport("user32.dll")] public static extern IntPtr WindowFromPoint(POINT point);
@@ -139,7 +143,29 @@ public static class Host {
  static void Protect(Entry entry){bool changed=secrets.Add(SecretKey(entry.Window,entry.Runtime));changed=secrets.Add(SecretKey(entry.Window,"title"))||changed;if(changed)SaveSecrets();}
  static object SetValue(JsonElement args){var entry=Target(args);object pattern;if(!entry.Element.TryGetCurrentPattern(ValuePattern.Pattern,out pattern))throw Unsupported();var value=(ValuePattern)pattern;if(value.Current.IsReadOnly)throw new Failure("input-denied","输入控件只读");bool secret=Bool(args,"secret");if(entry.Element.Current.IsPassword&&!secret)throw new Failure("input-denied","密码框需要保密输入");var text=Text(args,"text");if(text.Length>65536)throw new Failure("input-denied","输入内容过大");if(secret)Protect(entry);if(!Bool(args,"clear",true)){if(secret||entry.Element.Current.IsPassword)throw new Failure("input-denied","保密输入不支持追加读回");text=value.Current.Value+text;}value.SetValue(text);entry.Name=entry.Element.Current.Name;bool verified=false;if(!secret&&!entry.Element.Current.IsPassword){verified=value.Current.Value==text;if(!verified)throw new Failure("action-failed","输入已送出，但读回结果不一致，请检查控件");}return Data("ref",Text(args,"ref"),"performed",true,"verified",verified,"verification",secret?"hidden":"read-back","physical",false);}
  static object ReadValue(JsonElement args){var entry=Target(args);if(entry.Element.Current.IsPassword||secrets.Contains(SecretKey(entry.Window,entry.Runtime))||secrets.Contains(SecretKey(entry.Window,"window")))throw new Failure("input-denied","保密字段不返回值");object pattern;if(!entry.Element.TryGetCurrentPattern(ValuePattern.Pattern,out pattern))throw Unsupported();var text=((ValuePattern)pattern).Current.Value;return Data("ref",Text(args,"ref"),"value",Cut(text,300),"truncated",text.Length>300);}
- static WindowData Focus(WindowData window){var handle=Handle(window.handle);if(window.minimized)Win.ShowWindow(handle,9);if(Win.GetForegroundWindow()!=handle)Win.SetForegroundWindow(handle);Thread.Sleep(50);if(Win.GetForegroundWindow()!=handle)throw new Failure("input-denied","无法将目标窗口置于前台，请用户先切换窗口");return Info(handle);}
+ static bool BringToForeground(IntPtr handle){
+  if(Win.GetForegroundWindow()==handle)return true;
+  if(Win.IsIconic(handle))Win.ShowWindow(handle,9);
+  Win.SetForegroundWindow(handle);
+  if(Win.GetForegroundWindow()==handle)return true;
+  // Fallback 1: share the foreground thread's input state, then retry.
+  var self=Win.GetCurrentThreadId();var foreground=Win.GetWindowThreadProcessId(Win.GetForegroundWindow(),out _);
+  if(foreground!=0&&foreground!=self&&Win.AttachThreadInput(self,foreground,true)){
+   try{Win.SetForegroundWindow(handle);}finally{Win.AttachThreadInput(self,foreground,false);}
+   if(Win.GetForegroundWindow()==handle)return true;
+  }
+  // Fallback 2: a synthetic Alt press restores this thread's foreground right without touching window state.
+  Win.keybd_event(0x12,0,0,UIntPtr.Zero);Win.keybd_event(0x12,0,2,UIntPtr.Zero);
+  Win.SetForegroundWindow(handle);
+  if(Win.GetForegroundWindow()==handle)return true;
+  // Fallback 3: the shell's own activation path, then a short retry window for slow shells.
+  Win.SwitchToThisWindow(handle,false);
+  for(var attempt=0;attempt<6&&Win.GetForegroundWindow()!=handle;attempt++){
+   Thread.Sleep(60);Win.SetForegroundWindow(handle);
+  }
+  return Win.GetForegroundWindow()==handle;
+ }
+ static WindowData Focus(WindowData window){var handle=Handle(window.handle);if(window.minimized)Win.ShowWindow(handle,9);if(!BringToForeground(handle))throw new Failure("input-denied","无法将目标窗口置于前台，请用户先切换窗口");Thread.Sleep(50);if(Win.GetForegroundWindow()!=handle)throw new Failure("input-denied","无法将目标窗口置于前台，请用户先切换窗口");return Info(handle);}
  static void PhysicalCheck(WindowData window,string expected,Box before){var fresh=Allowed(Info(Handle(window.handle)));if(fresh.Key!=expected||fresh.title!=window.title||!fresh.foreground||fresh.rect.x!=before.x||fresh.rect.y!=before.y||fresh.rect.w!=before.w||fresh.rect.h!=before.h)throw new Failure("action-failed","窗口身份、位置或前台发生变化，停止真实键鼠操作");}
  static void Prepare(WindowData window,Point? point,JsonElement args,Entry entry){if(!Win.AreDpiAwarenessContextsEqual(Win.GetThreadDpiAwarenessContext(),new IntPtr(-4)))throw new Failure("input-denied","DPI 坐标校验失败");window=Focus(window);if(entry!=null)entry.Element.SetFocus();if(point.HasValue){if(!window.rect.GetRectangle().Contains(point.Value))throw new Failure("input-denied","点击坐标超出窗口");var root=Win.GetAncestor(Win.WindowFromPoint(new Win.POINT(point.Value.X,point.Value.Y)),2);if(root!=Handle(window.handle))throw new Failure("action-failed","目标位置被其他窗口遮挡");}uint activity=Win.LastInput();bool shown=false;try{shown=Indicator.Show(window.rect.GetRectangle(),point);}catch{if(Bool(args,"requireIndicator",true))throw new Failure("indicator-unavailable","无法显示桌面操作标记，未执行真实键鼠动作");}if(!shown&&Bool(args,"requireIndicator",true))throw new Failure("indicator-unavailable","操作标记不可见，未执行真实键鼠动作");Thread.Sleep(Math.Max(600,Math.Min(1000,Int(args,"holdMs",600))));SafeDesktop();PhysicalCheck(window,Text(args,"expectedWindow",window.Key),window.rect);if(Win.LastInput()!=activity)throw new Failure("input-denied","标记显示期间检测到用户键鼠输入，已停止本次物理操作");if(entry!=null)Target(args);}
  static Win.INPUT Key(ushort code,bool up=false){return new Win.INPUT{type=1,value=new Win.UNION{key=new Win.KEYBOARD{vk=code,flags=up?2u:0u}}};}
